@@ -1,0 +1,198 @@
+# Tic Tac Toe Game - Simple Version for Beginners
+import pygame
+import sys
+
+# Start pygame - always needed
+pygame.init()
+
+# Game window size
+width = 600
+height = 600
+
+# Colors we'll use (Red, Green, Blue values)
+background_color = (28, 170, 156)  # Teal color
+line_color = (23, 145, 135)        # Darker teal for lines
+x_color = (66, 66, 66)             # Dark gray for X
+o_color = (239, 231, 200)          # Light beige for O
+
+# Create the game window
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption('Tic Tac Toe')  # Window title
+screen.fill(background_color)  # Paint background
+
+# Game board - 3x3 grid with empty spaces
+board = [
+    ['', '', ''],  # Row 1
+    ['', '', ''],  # Row 2
+    ['', '', '']   # Row 3
+]
+
+# X goes first (True = X's turn, False = O's turn)
+x_turn = True
+
+# Draw the tic tac toe grid lines
+def draw_grid():
+    # Horizontal lines
+    pygame.draw.line(screen, line_color, (0, 200), (600, 200), 15)  # Line between row 1-2
+    pygame.draw.line(screen, line_color, (0, 400), (600, 400), 15)  # Line between row 2-3
+
+    # Vertical lines
+    pygame.draw.line(screen, line_color, (200, 0), (200, 600), 15)  # Line between col 1-2
+    pygame.draw.line(screen, line_color, (400, 0), (400, 600), 15)  # Line between col 2-3
+
+# Draw X and O on the board
+def draw_symbols():
+    for row in range(3):      # Check each row (0,1,2)
+        for col in range(3):  # Check each column (0,1,2)
+            if board[row][col] == 'X':
+                # Draw X - two crossing lines
+                start_x = col * 200 + 50   # Left side of X
+                start_y = row * 200 + 50   # Top of X
+                end_x = col * 200 + 150    # Right side of X
+                end_y = row * 200 + 150    # Bottom of X
+
+                # First line of X (top-left to bottom-right)
+                pygame.draw.line(screen, x_color, (start_x, start_y), (end_x, end_y), 15)
+                # Second line of X (top-right to bottom-left)
+                pygame.draw.line(screen, x_color, (end_x, start_y), (start_x, end_y), 15)
+
+            elif board[row][col] == 'O':
+                # Draw O - a circle
+                center_x = col * 200 + 100  # Center X coordinate
+                center_y = row * 200 + 100  # Center Y coordinate
+                pygame.draw.circle(screen, o_color, (center_x, center_y), 60, 15)
+
+# Check if someone won the game
+def check_winner():
+    # Check rows (horizontal)
+    for row in range(3):
+        if board[row][0] == board[row][1] == board[row][2] != '':
+            return board[row][0]  # Return 'X' or 'O' who won
+
+    # Check columns (vertical)
+    for col in range(3):
+        if board[0][col] == board[1][col] == board[2][col] != '':
+            return board[0][col]  # Return 'X' or 'O' who won
+
+    # Check diagonals
+    if board[0][0] == board[1][1] == board[2][2] != '':
+        return board[0][0]  # Top-left to bottom-right diagonal
+    if board[0][2] == board[1][1] == board[2][0] != '':
+        return board[0][2]  # Top-right to bottom-left diagonal
+
+    return None  # No winner yet
+
+# Check if board is full (tie game)
+def check_tie():
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] == '':  # If any empty space found
+                return False  # Game not tied yet
+    return True  # All spaces filled - tie game
+
+# Show game over message
+def show_game_over(winner):
+    # Create semi-transparent black overlay
+    overlay = pygame.Surface((width, height))
+    overlay.set_alpha(180)  # Transparency level
+    overlay.fill((0, 0, 0)) # Black color
+    screen.blit(overlay, (0, 0))
+
+    # Create font for text
+    font = pygame.font.Font(None, 74)  # Default font, size 74
+
+    # Create message text
+    if winner:
+        message = f"{winner} Wins!"
+    else:
+        message = "Tie Game!"
+
+    # Render the text (convert text to image)
+    text = font.render(message, True, (255, 255, 255))  # White text
+    text_rect = text.get_rect(center=(width//2, height//2))  # Center the text
+
+    # Display the text on screen
+    screen.blit(text, text_rect)
+
+    # Show restart instructions
+    small_font = pygame.font.Font(None, 36)
+    restart_text = small_font.render("Press R to Restart", True, (255, 255, 255))
+    restart_rect = restart_text.get_rect(center=(width//2, height//2 + 50))
+    screen.blit(restart_text, restart_rect)
+
+# Reset the game to start over
+def reset_game():
+    global board, x_turn
+    screen.fill(background_color)  # Clear screen
+    draw_grid()  # Redraw grid lines
+
+    # Clear the board
+    board = [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', '']
+    ]
+    x_turn = True  # X goes first again
+
+# Draw the initial grid
+draw_grid()
+
+# Game status
+game_over = False
+winner = None
+
+# Main game loop - runs continuously
+while True:
+    # Check for events (mouse clicks, keyboard, etc.)
+    for event in pygame.event.get():
+
+        # If user clicks the X button to close window
+        if event.type == pygame.QUIT:
+            pygame.quit()   # Close pygame
+            sys.exit()      # Close program
+
+        # If user presses a key
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:  # If 'R' key pressed
+                reset_game()  # Restart game
+                game_over = False
+                winner = None
+
+        # If user clicks mouse and game is not over
+        if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+            # Get mouse position
+            mouse_x = event.pos[0]  # X coordinate
+            mouse_y = event.pos[1]  # Y coordinate
+
+            # Convert mouse position to board position (0,1,2)
+            clicked_row = mouse_y // 200  # Which row was clicked
+            clicked_col = mouse_x // 200  # Which column was clicked
+
+            # If the clicked spot is empty
+            if board[clicked_row][clicked_col] == '':
+                # Place X or O depending on whose turn it is
+                if x_turn:
+                    board[clicked_row][clicked_col] = 'X'
+                else:
+                    board[clicked_row][clicked_col] = 'O'
+
+                # Check for winner
+                winner = check_winner()
+                if winner:
+                    game_over = True
+                elif check_tie():  # Check for tie
+                    game_over = True
+                    winner = None
+
+                # Switch turns
+                x_turn = not x_turn
+
+                # Redraw the symbols
+                draw_symbols()
+
+    # Update the display
+    pygame.display.update()
+
+    # If game is over, show game over screen
+    if game_over:
+        show_game_over(winner)
